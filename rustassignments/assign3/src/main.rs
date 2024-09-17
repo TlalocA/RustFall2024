@@ -8,8 +8,8 @@ fn check_guess(guess: i32, secret: i32) -> i32{
     }
 }
 
-
 fn main() {
+    // mut variables to simulate input
     let mut guess: i32 = 10;
     let mut secret: i32 = 16;
 

@@ -20,7 +20,6 @@ fn main() {
         c += 1.0;
 
         println!("{}F is {:.0}C", f, fahrenheit_to_celsius(f));
-        println!(" ");
         println!("{}C is {:.0}F", c, celsius_to_fahrenheit(c));
         println!(" ");
         

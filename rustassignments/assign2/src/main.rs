@@ -34,7 +34,6 @@ fn main() {
     }
 
     println!("sum of all numbers: {}", sum);
-
     let mut max = 0;
     
     let result = loop{
