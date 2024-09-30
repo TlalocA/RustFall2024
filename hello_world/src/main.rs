@@ -1,18 +1,26 @@
-#[allow(unused_variables, unused_mut)]
-fn sum(total: &mut i32, low: i32, high: i32){
-    for idx in low..=high{
-        *total += idx;
-        //println!("{}", idx);
+use std::fs::File;
+use std::io::{Read, BufReader, BufRead};
+
+fn read_entire_file() {
+    let mut file = File::open("example.txt").unwrap();
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).unwrap();
+    println!("File contents:\n{}", contents);
+}
+
+fn read_file_line_by_line() {
+    let file = File::open("example.txt").unwrap();
+    let reader = BufReader::new(file);
+
+    for line in reader.lines() {
+        println!("{}", line.unwrap());
     }
 }
 
-fn main(){
-    let low = 0;
-    let high = 100;
-    let mut total = 0;
-    sum(&mut total, low, high);
+fn main() {
+    println!("Reading entire file:");
+    read_entire_file();
 
-    println!("Total: {}", total);
- 
-    
+    println!("\nReading file line by line:");
+    read_file_line_by_line();
 }
