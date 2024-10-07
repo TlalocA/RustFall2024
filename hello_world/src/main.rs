@@ -1,18 +1,55 @@
-use std::process::Command;
-
-// not exactly working?
-
-fn executing_os_commands_linux() {
-    let output = Command::new(program: "python3")
-        .arg("my_script.py")
-        .output()
-        .expect("Failed to execute command");
-
-    println!("{:?}", output);
-    println!("Command output: {}", String::from_utf8_lossy(&output.stdout));
+#[derive(Debug)]
+enum GradeLevel{
+    Bachelor,
+    Master,
+    PhD,
 }
 
-fn main() {
-    executing_os_commands_linux();
-    
+#[derive(Debug)]
+enum Major{
+    ComputerScience,
+    ElectricalEngineering,
+}
+
+#[derive(Debug)]
+struct Student {
+    name:String,
+    grade:GradeLevel,
+    major:Major,
+}
+
+impl Student{
+    fn new(name: String, grade: GradeLevel, major: Major) -> Self{
+        Student{
+            name: name,
+            grade: grade,
+            major: major,
+        }
+    }
+
+    fn introduce_yourself(&self){
+        let name_msg = &self.name;
+
+        let grade_msg = match self.grade{
+            GradeLevel::Bachelor => "I am a Bachelor",
+            GradeLevel::Master => "I am a Master",
+            GradeLevel::PhD => "I have a PhD",
+        };
+
+        let major_msg = match self.major{
+            Major::ComputerScience => "I major in Computer Science",
+            Major::ElectricalEngineering => "I major in Electrical Engineering",
+        };
+
+        println!("My name is {}, {}, {}", name_msg, grade_msg, major_msg);
+    }
+}
+
+fn main(){
+
+    let s1:Student = Student::new("Tlaloc Alarcon".to_string(), GradeLevel::Bachelor, Major::ComputerScience);
+
+    s1.introduce_yourself();
+ 
+    //println!("{:?}", s1);
 }
