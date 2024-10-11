@@ -32,7 +32,7 @@ fn load_books(filename: &str) -> Vec<Book> {
         match line {
             // Ok() handles unwrapping, content essentially is lines.unwrap()
             Ok(content) => {
-                // splits string into vector using " " as delimiter
+                // splits string into vector using "-" as delimiter
                 let param: Vec<&str> = content.split('-').collect();
 
                 // ensure that there exists a title, author, and year (ensure vector has 3 values)
