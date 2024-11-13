@@ -1,7 +1,6 @@
 use serde::Deserialize;
 // use std::error::Error;
 
-
 #[derive(Debug)]
 
 struct Bitcoin{
@@ -82,15 +81,15 @@ fn main() {
 
     println!("{:?}", b)
 
-    /*
-    let eth_api = "".to_string();
-    let eth_txt = "".to_string();
+    let eth_api = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd".to_string();
+    let eth_txt = "eth_prices.json".to_string();
     let e = Ethereum{api_address:eth_api, file_name:eth_txt};
 
     let eth_price = ureq::get(&e.api_address).call().unwrap();
 
     println!("{:?}", e)
 
+    /*
     let sp_api = "".to_string();
     let sp_txt = "".to_string();
     let s = SP500{api_address:sp_api, file_name:sp_txt};
