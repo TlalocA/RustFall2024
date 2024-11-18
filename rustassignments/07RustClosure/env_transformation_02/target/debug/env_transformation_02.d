@@ -1,0 +1,1 @@
+/workspaces/RustFall2024/rustassignments/07RustClosure/env_transformation_02/target/debug/env_transformation_02: /workspaces/RustFall2024/rustassignments/07RustClosure/env_transformation_02/src/main.rs

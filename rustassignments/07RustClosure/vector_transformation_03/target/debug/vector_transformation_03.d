@@ -1,0 +1,1 @@
+/workspaces/RustFall2024/rustassignments/07RustClosure/vector_transformation_03/target/debug/vector_transformation_03: /workspaces/RustFall2024/rustassignments/07RustClosure/vector_transformation_03/src/main.rs
