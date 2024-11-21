@@ -1,6 +1,7 @@
 use serde::Deserialize;
+use ureq::serde_json;
+use serde_json::json;
 use std::fs;
-//use std::io::{Write, BufReader, BufRead};
 use std::{thread, time::Duration};
 // use std::error::Error;
 
@@ -54,12 +55,23 @@ impl Pricing for Bitcoin {
     }
     
     fn save_to_file(&self){
-        
+        // fetch btc price with function
         let btc_price = self.fetch_price();
-        let content = format!("Current ETH price: ${:.2}", btc_price);
-        
-        fs::write(&self.file_name, content);
-        println!("BTC price written to {:?}", self.file_name);
+
+        if btc_price != 0.0{
+            // serialize the price
+            let json_content = json!({
+                "usd": btc_price,
+            });
+
+            // write to file
+            fs::write(&self.file_name, json_content.to_string()).expect("Failed to write to file");
+
+            println!("BTC price written to {:?}", self.file_name);
+        }
+        else {
+            println!("Failed to fetch data");
+        }
     }
 }
 
@@ -90,11 +102,24 @@ impl Pricing for Ethereum {
     }
     
     fn save_to_file(&self){
+        // fetch btc price with function
         let eth_price = self.fetch_price();
-        let content = format!("Current ETH price: ${:.2}", eth_price);
-        
-        fs::write(&self.file_name, content);
-        println!("ETH price written to {:?}", self.file_name);
+
+        if eth_price != 0.0{
+            // serialize the price
+            let json_content = json!({
+                "usd": eth_price,
+            });
+
+            // write to file
+            fs::write(&self.file_name, json_content.to_string()).expect("Failed to write to file");
+
+            println!("ETH price written to {:?}", self.file_name);
+        }
+        else {
+            println!("Failed to fetch data");
+        }
+
     }
 }
 
@@ -132,11 +157,24 @@ impl Pricing for SP500 {
     }
     
     fn save_to_file(&self){
-        let sp500_price = self.fetch_price();
-        let content = format!("Current S&P 500 price: ${:.2}", sp500_price);
-        
-        fs::write(&self.file_name, content);
-        println!("S&P 500 price written to {:?}", self.file_name);
+        // fetch btc price with function
+        let sp_price = self.fetch_price();
+
+        if sp_price != 0.0{
+             // serialize the price
+            let json_content = json!({
+                "usd": sp_price,
+            });
+
+            // write to file
+            fs::write(&self.file_name, json_content.to_string()).expect("Failed to write to file");
+
+            println!("S&P 500 price written to {:?}", self.file_name);
+        }
+        else {
+            println!("Failed to fetch data");
+        }
+       
     }
 }
 
@@ -159,7 +197,7 @@ struct ETHPriceAPI{
 struct SP500PriceAPI {
     chart: Chart,
 }
-// chart contains historical info as well as price, vector needed
+// chart contains historical info as well as price, vector needed to store
 #[derive(Debug, Deserialize)]
 struct Chart {
     result: Vec<Result>,
@@ -180,24 +218,16 @@ fn main() {
     let btc_api = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd".to_string();
     let btc_txt = "btc_prices.json".to_string();
     let b = Bitcoin{api_address:btc_api, file_name:btc_txt};
-    
-    //let btc_price = ureq::get(&b.api_address).call().unwrap();
-    //let b: BTCPriceAPI = btc_price.into_json::<BTCPriceAPI>().unwrap();
 
     // initializing ethereum api and file
     let eth_api = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd".to_string();
     let eth_txt = "eth_prices.json".to_string();
     let e = Ethereum{api_address:eth_api, file_name:eth_txt};
 
-    //let eth_price = ureq::get(&e.api_address).call().unwrap();
-    //let e: ETHPriceAPI = eth_price.into_json::<ETHPriceAPI>().unwrap();
-
     // initializing sp500 api and file
     let sp_api = "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1m&range=1d".to_string();
     let sp_txt = "sp_prices.json".to_string();
     let s = SP500{api_address:sp_api, file_name:sp_txt};
-
-    //let sp_price = ureq::get(&s.api_address).call().unwrap();
 
     // loop to update pricing every 10 seconds
     // same as while(true)
@@ -208,10 +238,14 @@ fn main() {
         println!("ETH: {:?} USD", e.fetch_price());
         println!("SP500: {:?} USD", s.fetch_price());
        
+        println!();
+
+        println!("Attempting to write to files...");
         b.save_to_file();
         e.save_to_file();
         s.save_to_file();
 
+        println!();
         thread::sleep(Duration::from_secs(10));
     }
 }
