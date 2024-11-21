@@ -25,7 +25,7 @@ struct SP500{
 
 pub trait Pricing {
     fn fetch_price(&self) -> f32;
-    fn save_to_file(&self);
+    fn save_to_file(&self, price: f32);
 }
 
 impl Pricing for Bitcoin {
@@ -35,7 +35,9 @@ impl Pricing for Bitcoin {
                 if response.status() == 200 {
                     match response.into_json::<BTCPriceAPI>() {
                         Ok(data) => {
-                            return data.bitcoin.usd as f32;
+                            let price = data.bitcoin.usd as f32;
+                            self.save_to_file(price);
+                            price
                         },
                         Err(e) => {
                             eprintln!("Failed to parse JSON: {}", e);
@@ -54,14 +56,12 @@ impl Pricing for Bitcoin {
         }
     }
     
-    fn save_to_file(&self){
-        // fetch btc price with function
-        let btc_price = self.fetch_price();
-
-        if btc_price != 0.0{
+    fn save_to_file(&self, price: f32){
+        // prevent bad price fetch
+        if price != 0.0 {
             // serialize the price
             let json_content = json!({
-                "usd": btc_price,
+                "usd": price,
             });
 
             // write to file
@@ -70,7 +70,7 @@ impl Pricing for Bitcoin {
             println!("BTC price written to {:?}", self.file_name);
         }
         else {
-            println!("Failed to fetch data");
+            println!("Failed to update BTC price");
         }
     }
 }
@@ -82,7 +82,9 @@ impl Pricing for Ethereum {
                 if response.status() == 200 {
                     match response.into_json::<ETHPriceAPI>() {
                         Ok(data) => {
-                            return data.ethereum.usd as f32;
+                            let price = data.ethereum.usd as f32;
+                            self.save_to_file(price);
+                            price
                         },
                         Err(e) => {
                             eprintln!("Failed to parse JSON: {}", e);
@@ -101,14 +103,12 @@ impl Pricing for Ethereum {
         }
     }
     
-    fn save_to_file(&self){
-        // fetch btc price with function
-        let eth_price = self.fetch_price();
-
-        if eth_price != 0.0{
+    fn save_to_file(&self, price: f32){
+        // prevent bad price fetch
+        if price != 0.0{
             // serialize the price
             let json_content = json!({
-                "usd": eth_price,
+                "usd": price,
             });
 
             // write to file
@@ -116,8 +116,8 @@ impl Pricing for Ethereum {
 
             println!("ETH price written to {:?}", self.file_name);
         }
-        else {
-            println!("Failed to fetch data");
+        else{
+            println!("Failed to update ETH price");
         }
 
     }
@@ -131,7 +131,9 @@ impl Pricing for SP500 {
                     match response.into_json::<SP500PriceAPI>() {
                         Ok(data) => {
                             if let Some(result) = data.chart.result.first(){
-                                return result.meta.regularMarketPrice as f32;
+                                let price = result.meta.regularMarketPrice as f32;
+                                self.save_to_file(price);
+                                price
                             }
                             
                             else {
@@ -156,14 +158,12 @@ impl Pricing for SP500 {
         }
     }
     
-    fn save_to_file(&self){
-        // fetch btc price with function
-        let sp_price = self.fetch_price();
-
-        if sp_price != 0.0{
+    fn save_to_file(&self, price: f32){
+        // prevent bad price fetch
+        if price != 0.0{
              // serialize the price
             let json_content = json!({
-                "usd": sp_price,
+                "usd": price,
             });
 
             // write to file
@@ -172,7 +172,7 @@ impl Pricing for SP500 {
             println!("S&P 500 price written to {:?}", self.file_name);
         }
         else {
-            println!("Failed to fetch data");
+            println!("Failed to update S&P 500 price");
         }
        
     }
@@ -214,38 +214,36 @@ struct Meta {
 }
 
 fn main() {
-    // initializing bitcoin api and file
-    let btc_api = "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd".to_string();
-    let btc_txt = "btc_prices.json".to_string();
-    let b = Bitcoin{api_address:btc_api, file_name:btc_txt};
+     // Create a vector to hold all assets implementing Pricing
+     let prices: Vec<Box<dyn Pricing>> = vec![
+        Box::new(Bitcoin {
+            api_address: "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd".to_string(),
+            file_name: "btc_prices.json".to_string(),
+        }),
+        Box::new(Ethereum {
+            api_address: "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd".to_string(),
+            file_name: "eth_prices.json".to_string(),
+        }),
+        Box::new(SP500 {
+            api_address: "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1m&range=1d".to_string(),
+            file_name: "sp_prices.json".to_string(),
+        }),
+    ];
 
-    // initializing ethereum api and file
-    let eth_api = "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd".to_string();
-    let eth_txt = "eth_prices.json".to_string();
-    let e = Ethereum{api_address:eth_api, file_name:eth_txt};
-
-    // initializing sp500 api and file
-    let sp_api = "https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1m&range=1d".to_string();
-    let sp_txt = "sp_prices.json".to_string();
-    let s = SP500{api_address:sp_api, file_name:sp_txt};
-
-    // loop to update pricing every 10 seconds
-    // same as while(true)
+    
     loop {
+        // Iterate through the vector and perform operations
         println!("Fetching and processing prices...");
 
-        println!("BTC: {:?} USD", b.fetch_price());
-        println!("ETH: {:?} USD", e.fetch_price());
-        println!("SP500: {:?} USD", s.fetch_price());
-       
-        println!();
+        for price in &prices {
+            let p = price.fetch_price();
+            println!("Fetched price: ${}", p);
 
-        println!("Attempting to write to files...");
-        b.save_to_file();
-        e.save_to_file();
-        s.save_to_file();
+            //price.save_to_file();
+        }
 
         println!();
+     
         thread::sleep(Duration::from_secs(10));
     }
 }
