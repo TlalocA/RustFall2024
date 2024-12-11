@@ -18,18 +18,18 @@ fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
     let mut status = Err("Unknown error".to_string());
 
     for i in 0..=retries {
-        let agent = ureq::Agent::new();
-        let request = agent.get(url).timeout(timeout); // handles timeout, will timeout in 5 seconds
-        let result = request.call();
+        // agent handles timeouts
+        let agent = ureq::AgentBuilder::new().timeout_connect(timeout).timeout_read(timeout).build(); // handles connect and read timeouts
+        let result = agent.get(url).call(); // working solution
 
         match result {
             Ok(response) => {
-                println!("Fetch success!");
+                println!("Fetch success! ({})", i);
                 status = Ok(response.status());
                 //break; // break match if success
             }
             Err(e) => {
-                println!("Fetch failed, retying... (Attempt {})", i+1);
+                println!("Fetch failed, retying connection... ({})", i);
                 status = Err(e.to_string());
             }
         }
@@ -57,14 +57,14 @@ fn main() {
     let file_path = "websites.txt"; // Specify the file containing website URLs
     let urls = read_urls_from_file(file_path);
     let timeout = Duration::from_secs(5);
-    let retries = 2;
+    let retries = 3;
 
     // thread
     let results = Arc::new(Mutex::new(Vec::new()));
 
     for (step, url) in urls.into_iter().enumerate() {
         let results = Arc::clone(&results);
-        println!("--- Checking {}... ---", url);
+        println!("--- Attempting connection to {}... ---", url);
 
         let thread = thread::spawn(move || {
             let website_status = check_website(&url, timeout, retries);
