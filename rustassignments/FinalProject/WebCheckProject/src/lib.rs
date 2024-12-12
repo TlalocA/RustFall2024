@@ -51,7 +51,6 @@ pub fn read_urls_from_file(file_path: &str) -> Vec<String> {
 fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
     let start = Instant::now(); // start timer
     let mut status = Err("Unknown error".to_string());
-    let print_lock = Arc::new(Mutex::new(()));
     
     for i in 0..=retries {
         // handles connect and read timeouts
