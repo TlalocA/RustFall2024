@@ -24,12 +24,12 @@ fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
 
         match result {
             Ok(response) => {
-                println!("Fetch success! ({})", i);
+                println!("({}): Fetch success!", i);
                 status = Ok(response.status());
                 //break; // break match if success
             }
             Err(e) => {
-                println!("Fetch failed, retying connection... ({})", i);
+                println!("({}): Fetch failed, retying connection...", i);
                 status = Err(e.to_string());
             }
         }
@@ -46,7 +46,7 @@ fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
 
 fn read_urls_from_file(file_path: &str) -> Vec<String> {
     let content = fs::read_to_string(file_path).expect("Failed to read file!");
-    // using macros to read: map each line, trim whitespace, convert to string, collect result
+    //map each line, trim whitespace, convert to string, collect result
     content.lines().map(|line| line.trim().to_string()).collect() 
 }
 
@@ -55,41 +55,54 @@ fn main() {
 
     // config
     let file_path = "websites.txt"; // Specify the file containing website URLs
-    let urls = read_urls_from_file(file_path);
-    let timeout = Duration::from_secs(5);
-    let retries = 3;
+
+    loop {
+        let urls = read_urls_from_file(file_path);
+        let timeout = Duration::from_secs(3);
+        let retries = 3;
 
     // thread
-    let results = Arc::new(Mutex::new(Vec::new()));
+    
+        let results = Arc::new(Mutex::new(Vec::new()));
 
-    for (step, url) in urls.into_iter().enumerate() {
-        let results = Arc::clone(&results);
-        println!("--- Attempting connection to {}... ---", url);
+        for (step, url) in urls.into_iter().enumerate() {
+            let results = Arc::clone(&results);
+            println!("--- Attempting connection to {}... ---", url);
 
-        let thread = thread::spawn(move || {
-            let website_status = check_website(&url, timeout, retries);
+            let thread = thread::spawn(move || {
+                let website_status = check_website(&url, timeout, retries);
 
-            {
-                let mut results = results.lock().unwrap(); // mutex locking for thread sync
-                results.push(website_status); // push to status result vector
-            }
+                {
+                    let mut results = results.lock().unwrap(); // mutex locking for thread sync
+                    results.push(website_status); // push to status result vector
+                }
 
-            println!("Thread {} finished checking URL: {}", step + 1, url);
-            println!();
-        });
+                println!("Thread {} finished checking URL: {}", step + 1, url);
+                println!();
+            });
 
-        thread.join().unwrap();
-    }
+            thread.join().unwrap();
+        }
 
-    println!("--- Status Summary ---");
+        println!("--- Status Summary ---");
 
-    let results = results.lock().unwrap();
-    // iterate through results for respective url result
-    for result in results.iter() {
-        let response = match &result.status {
-            Ok(code) => code.to_string(), //OK -> URL response 
-            Err(err) => err.clone(), //Err -> URL response error
-        };
-        println!("{}: {}: {} (elapsed time: {:?})", result.timestamp, result.url, response, result.response_time);
+        let results = results.lock().unwrap();
+        //iterate through results, return sums of response time
+        let average_time: Duration = results.iter().map(|result| result.response_time).sum(); 
+
+        // iterate through results for respective url result
+        for result in results.iter() {
+            let response = match &result.status {
+                Ok(code) => code.to_string(), //OK -> URL response 
+                Err(err) => err.clone(), //Err -> URL response error
+            };
+            println!("{}: {}: {} (elapsed time: {:?})", result.timestamp, result.url, response, result.response_time);
+        }
+
+        println!("\n--- Average response time was: {:?} ---\n", average_time/results.len() as u32);  // divide time by length of results, type as u32
+
+        println!("--- Checking again in 15 seconds... ---\n");
+        thread::sleep(Duration::from_secs(15));
+        
     }
 }
