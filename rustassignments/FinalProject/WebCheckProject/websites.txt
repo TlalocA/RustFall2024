@@ -3,8 +3,3 @@ https://www.google.com
 https://www.rust-lang.org
 https://www.bad-website.badsite
 https://10.255.255.1
-https://www.youtube.com/
-https://www.notarealwebsite.badsite
-https://www.amazon.com/
-https://discord.com/
-https://github.com/
