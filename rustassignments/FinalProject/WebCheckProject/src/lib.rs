@@ -2,17 +2,44 @@ use std::time::{Duration, Instant};
 use chrono::{DateTime, Utc};
 use std::fs;
 use ureq;
-
-// naming this lib.rs proved to be a working solution
-// not too sure what was meant by "modularize", thought separating functions from main would be ideal
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 // given website status struct
-#[derive(Debug)]
+#[derive(Debug, Clone)] // clone allows for handle thread function to work
 pub struct WebsiteStatus {
     pub url: String,
     pub status: Result<u16, String>,
     pub response_time: Duration,
     pub timestamp: DateTime<Utc>,
+}
+
+pub fn handle_threads(urls: Vec<String>, timeout: Duration, retries: u8) -> Vec<WebsiteStatus> {
+    let results = Arc::new(Mutex::new(Vec::new()));
+    let mut threads = Vec::new();  //stores and handles threads
+
+    for (step, url) in urls.into_iter().enumerate() {
+        let results = Arc::clone(&results);
+
+        let thread = thread::spawn(move || {
+            let status = check_website(&url, timeout, retries);
+            let mut results = results.lock().unwrap(); // mutex locking for thread sync
+            results.push(status); // push to status result vector
+        
+            println!("Thread {} finished checking URL: {}", step + 1, url);
+            println!();
+        });
+
+        threads.push(thread); // completed thread, store in threads vector
+    }
+
+    for thread in threads { // ensures all threads have caught up
+        thread.join().unwrap(); 
+    }
+
+    let results = results.lock().unwrap().clone(); // clone results for return
+
+    results
 }
 
 pub fn read_urls_from_file(file_path: &str) -> Vec<String> {
@@ -21,24 +48,25 @@ pub fn read_urls_from_file(file_path: &str) -> Vec<String> {
     content.lines().map(|line| line.trim().to_string()).collect()
 }
 
-pub fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
+fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus {
     let start = Instant::now(); // start timer
     let mut status = Err("Unknown error".to_string());
-
+    let print_lock = Arc::new(Mutex::new(()));
+    
     for i in 0..=retries {
         // handles connect and read timeouts
         let agent = ureq::AgentBuilder::new().timeout_connect(timeout).timeout_read(timeout).build();
 
         let result = agent.get(url).call(); // agent fetches url, working solution
-
+        
         match result {
             Ok(response) => {
-                println!("({}): Fetch success!", i);
+                println!("({}): {} connection success!", i, url);
                 status = Ok(response.status()); // Ok -> valid status
-                break; // break match if success, comment out for constant checking
+                break; // break on success
             }
             Err(e) => {
-                println!("({}): Fetch failed, retrying...", i);
+                println!("({}): {} connection failed, retrying...", i, url);
                 status = Err(e.to_string()); // Err -> error status
             }
         }
@@ -87,7 +115,7 @@ mod tests {
         }
     }
 
-    // test invalid url
+    // test invalid url (error handle)
     #[test]
     fn test_check_website_invalid() {
         let url = "https://badtest.badsite";
@@ -99,7 +127,7 @@ mod tests {
         assert!(response.status.is_err());
     }
 
-    // test unreachable
+    // test unreachable (error handle)
     #[test]
     fn test_check_website_unreachable() {
         let url = "https://0.0.0.0";
