@@ -3,16 +3,6 @@
 version = 3
 
 [[package]]
-name = "WebCheckProject"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "serde",
- "serde_json",
- "ureq",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -646,6 +636,16 @@ name = "wasm-bindgen-shared"
 version = "0.2.99"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "943aab3fdaaa029a6e0271b35ea10b72b943135afe9bffca82384098ad0e06a6"
+
+[[package]]
+name = "web_check_project"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "ureq",
+]
 
 [[package]]
 name = "webpki-roots"
