@@ -17,6 +17,7 @@ pub struct WebsiteStatus {
 
 pub fn read_urls_from_file(file_path: &str) -> Vec<String> {
     let content = fs::read_to_string(file_path).expect("Failed to read file!");
+    //map each line, trim whitespace, convert to string, collect result
     content.lines().map(|line| line.trim().to_string()).collect()
 }
 
@@ -28,17 +29,17 @@ pub fn check_website(url: &str, timeout: Duration, retries: u8) -> WebsiteStatus
         // handles connect and read timeouts
         let agent = ureq::AgentBuilder::new().timeout_connect(timeout).timeout_read(timeout).build();
 
-        let result = agent.get(url).call(); // working solution
+        let result = agent.get(url).call(); // agent fetches url, working solution
 
         match result {
             Ok(response) => {
                 println!("({}): Fetch success!", i);
-                status = Ok(response.status());
-                //break; // break match if success
+                status = Ok(response.status()); // Ok -> valid status
+                break; // break match if success, comment out for constant checking
             }
             Err(e) => {
                 println!("({}): Fetch failed, retrying...", i);
-                status = Err(e.to_string());
+                status = Err(e.to_string()); // Err -> error status
             }
         }
     }

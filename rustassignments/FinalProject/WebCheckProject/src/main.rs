@@ -7,7 +7,7 @@ fn main() {
     println!("--- Web Checker Start! ---");
 
     // config
-    let file_path = "websites.txt"; // Specify the file containing website URLs
+    let file_path = "websites.txt";
 
     loop {
         let urls = read_urls_from_file(file_path);
@@ -45,8 +45,8 @@ fn main() {
         // iterate through results for respective url result
         for result in results.iter() {
             let response = match &result.status {
-                Ok(code) => code.to_string(), //OK -> URL response 
-                Err(err) => err.clone(), //Err -> URL response error
+                Ok(code) => code.to_string(), //OK -> url code response 
+                Err(err) => err.clone(), //Err -> url response error
             };
             println!("{}: {}: {} (elapsed time: {:?})", result.timestamp, result.url, response, result.response_time);
         }
